@@ -24,4 +24,5 @@ go.work
 *.zip
 .vscode
 main.go
+!**/main.go
 *.sum
