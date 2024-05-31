@@ -1,6 +1,6 @@
 # go-event
 
-`go-event` is a flexible and easy-to-use event handling system for Go, designed to manage event subscriptions and dispatching with priority and asynchronous capabilities. This package provides a structured way to handle various events, making it suitable for building event-driven applications.
+`goevent` is a flexible and easy-to-use event handling system for Go, designed to manage event subscriptions and dispatching with priority and asynchronous capabilities. This package provides a structured way to handle various events, making it suitable for building event-driven applications.
 
 ## Features
 
@@ -11,14 +11,14 @@
 
 ## Installation
 
-To use the `go-event` package in your Go project, run:
+To use the `goevent` package in your Go project, run:
 
 ```sh
-go get github.com/zohurul88/go-event
+go get github.com/zohurul88/goevent
 ```
 
 ## Usage
-Here's a basic example of how to use the `go-event` package:
+Here's a basic example of how to use the `goevent` package:
 
 ```go
 package order
