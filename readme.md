@@ -21,80 +21,98 @@ go get github.com/zohurul88/go-event
 Here's a basic example of how to use the `go-event` package:
 
 ```go
-package main
+package order
 
 import (
-	"fmt"
+	"log"
+	"net/http"
+	"time"
 
-	"github.com/zohurul88/go-event/dispatcher"
-	"github.com/zohurul88/go-event/event"
-	"github.com/zohurul88/go-event/registry"
+	"github.com/zohurul88/goevent"
 )
 
-type UserCreatedEvent struct {
-	event.BaseEvent
-	Username string
+type OrderEvent struct {
+	goevent.BaseEvent
+	OrderID       string
+	Amount        float64
+	Items         []string
+	CustomerID    string
+	OrderDate     string
+	LoyaltyPoints int
+	Message       string
 }
 
-func (e UserCreatedEvent) GetName() string {
-	return e.EventName
-}
-
-type UserDeletedEvent struct {
-	event.BaseEvent
-	Username string
-}
-
-func (e UserDeletedEvent) GetName() string {
+func (e OrderEvent) GetName() string {
 	return e.EventName
 }
 
 func main() {
-	registry := registry.GetGlobalDispatcherRegistry()
+	reg := goevent.GetGlobalDispatcherRegistry()
 
-	// Create and set dispatcher for UserCreatedEvent
-	userCreatedDispatcher := dispatcher.NewEventDispatcher[UserCreatedEvent]()
-	registry.SetDispatcher("UserCreated", userCreatedDispatcher)
+	// Create and set dispatcher for OrderEvent
+	orderDispatcher := goevent.NewEventDispatcher[OrderEvent]()
+	reg.SetDispatcher("OrderEvent", orderDispatcher)
 
-	// Subscribe handlers to the UserCreated event with different priorities
-	userCreatedDispatcher.Subscribe("UserCreated", func(event UserCreatedEvent) {
-		fmt.Printf("User created: %s\n", event.Username)
+	// Subscribe handlers to the OrderEvent with different priorities
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		log.Printf("Order confirmed: %s\n", e.OrderID)
 	}, 1)
 
-	userCreatedDispatcher.Subscribe("UserCreated", func(event UserCreatedEvent) {
-		fmt.Printf("Sending welcome email to: %s\n", event.Username)
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		log.Printf("Payment processed for order: %s, amount: %.2f\n", e.OrderID, e.Amount)
 	}, 2)
 
-	// Create and set dispatcher for UserDeletedEvent
-	userDeletedDispatcher := dispatcher.NewEventDispatcher[UserDeletedEvent]()
-	registry.SetDispatcher("UserDeleted", userDeletedDispatcher)
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		log.Printf("Inventory updated for order: %s, items: %v\n", e.OrderID, e.Items)
+	}, 3)
 
-	// Subscribe handlers to the UserDeleted event with different priorities
-	userDeletedDispatcher.Subscribe("UserDeleted", func(event UserDeletedEvent) {
-		fmt.Printf("User deleted: %s\n", event.Username)
-	}, 1)
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		orderDate, _ := time.Parse("2006-01-02", e.OrderDate)
+		shippingDate := orderDate.AddDate(0, 0, 3)
+		log.Printf("Shipping scheduled for order: %s on date: %s\n", e.OrderID, shippingDate.String())
+	}, 4)
 
-	userDeletedDispatcher.Subscribe("UserDeleted", func(event UserDeletedEvent) {
-		fmt.Printf("Sending account deletion email to: %s\n", event.Username)
-	}, 2)
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		log.Printf("Customer notified for order: %s, message: %s\n", e.OrderID, e.Message)
+	}, 5)
 
-	// Dispatch a UserCreated event synchronously
-	userCreatedEvent := UserCreatedEvent{
-		BaseEvent: event.BaseEvent{EventName: "UserCreated"},
-		Username:  "johndoe",
-	}
-	userCreatedDispatcher.DispatchSync(userCreatedEvent)
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		log.Printf("Invoice generated for order: %s, invoice: %s\n", e.OrderID, "INV123")
+	}, 6)
 
-	// Dispatch a UserDeleted event asynchronously
-	userDeletedEvent := UserDeletedEvent{
-		BaseEvent: event.BaseEvent{EventName: "UserDeleted"},
-		Username:  "johndoe",
-	}
-	userDeletedDispatcher.DispatchAsync(userDeletedEvent, &registry.AsyncWG)
+	orderDispatcher.Subscribe("OrderEvent", func(e OrderEvent) {
+		log.Printf("Loyalty points updated for customer: %s, points: %d\n", e.CustomerID, e.LoyaltyPoints)
+	}, 7)
 
-	// Wait for all async events to complete
-	registry.WaitForAsyncCompletion()
+	// Example HTTP server to handle order confirmation
+	http.HandleFunc("/confirm", func(w http.ResponseWriter, r *http.Request) {
+		orderID := r.URL.Query().Get("orderID")
+		if orderID == "" {
+			http.Error(w, "Order ID is required", http.StatusBadRequest)
+			return
+		}
+
+		orderEvent := OrderEvent{
+			BaseEvent:     goevent.BaseEvent{EventName: "OrderEvent"},
+			OrderID:       orderID,
+			Amount:        100.00,
+			Items:         []string{"item1", "item2"},
+			CustomerID:    "customer123",
+			OrderDate:     "2024-06-01",
+			LoyaltyPoints: 10,
+			Message:       "Your order has been confirmed",
+		}
+		orderDispatcher.DispatchSync(orderEvent)
+		// orderDispatcher.DispatchAsync(orderEvent, &reg.AsyncWG)
+
+		w.Write([]byte("Order confirmed and events triggered"))
+	})
+
+	// Start the HTTP server
+	log.Println("Starting server on :8080")
+	http.ListenAndServe(":8080", nil)
 }
+
 
 ```
 

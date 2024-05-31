@@ -1,30 +1,30 @@
-package event
+package goevent
 
 import (
 	"testing"
 )
 
-// UserCreatedEvent represents a user creation event.
-type UserCreatedEvent struct {
-	BaseEvent
-	Username string
-}
+// // UserCreatedEvent represents a user creation event.
+// type UserCreatedEvent struct {
+// 	BaseEvent
+// 	Username string
+// }
 
-// GetName returns the name of the event.
-func (e UserCreatedEvent) GetName() string {
-	return e.EventName
-}
+// // GetName returns the name of the event.
+// func (e UserCreatedEvent) GetName() string {
+// 	return e.EventName
+// }
 
-// UserDeletedEvent represents a user deletion event.
-type UserDeletedEvent struct {
-	BaseEvent
-	Username string
-}
+// // UserDeletedEvent represents a user deletion event.
+// type UserDeletedEvent struct {
+// 	BaseEvent
+// 	Username string
+// }
 
-// GetName returns the name of the event.
-func (e UserDeletedEvent) GetName() string {
-	return e.EventName
-}
+// // GetName returns the name of the event.
+// func (e UserDeletedEvent) GetName() string {
+// 	return e.EventName
+// }
 
 func TestUserCreatedEvent_GetName(t *testing.T) {
 	event := UserCreatedEvent{BaseEvent: BaseEvent{EventName: "UserCreated"}, Username: "johndoe"}

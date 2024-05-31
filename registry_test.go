@@ -1,25 +1,22 @@
-package registry
+package goevent
 
 import (
 	"testing"
-
-	"github.com/zohurul88/go-event/dispatcher"
-	"github.com/zohurul88/go-event/event"
 )
 
-type UserCreatedEvent struct {
-	event.BaseEvent
-	Username string
-}
+// type UserCreatedEvent struct {
+// 	event.BaseEvent
+// 	Username string
+// }
 
-func (e UserCreatedEvent) GetName() string {
-	return e.EventName
-}
+// func (e UserCreatedEvent) GetName() string {
+// 	return e.EventName
+// }
 
 func TestDispatcherRegistry_SetAndGetDispatcher(t *testing.T) {
 	registry := NewDispatcherRegistry()
 
-	userCreatedDispatcher := dispatcher.NewEventDispatcher[UserCreatedEvent]()
+	userCreatedDispatcher := NewEventDispatcher[UserCreatedEvent]()
 	registry.SetDispatcher("UserCreated", userCreatedDispatcher)
 
 	retrieved := registry.GetDispatcher("UserCreated")

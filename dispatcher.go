@@ -1,30 +1,29 @@
-package dispatcher
+package goevent
 
 import (
+	"errors"
 	"sort"
 	"sync"
-
-	"github.com/zohurul88/go-event/event"
 )
 
 // EventDispatcher manages event subscriptions and dispatching with priorities.
-type EventDispatcher[T event.Event] struct {
-	handlers map[string][]event.PriorityHandler[T]
+type EventDispatcher[T Event] struct {
+	handlers map[string][]PriorityHandler[T]
 	mu       sync.RWMutex
 }
 
 // NewEventDispatcher creates a new EventDispatcher.
-func NewEventDispatcher[T event.Event]() *EventDispatcher[T] {
+func NewEventDispatcher[T Event]() *EventDispatcher[T] {
 	return &EventDispatcher[T]{
-		handlers: make(map[string][]event.PriorityHandler[T]),
+		handlers: make(map[string][]PriorityHandler[T]),
 	}
 }
 
-// Subscribe registers a handler with a priority for an event.
-func (d *EventDispatcher[T]) Subscribe(eventName string, handler event.EventHandler[T], priority int) {
+// Subscribe registers a handler with a priority for an
+func (d *EventDispatcher[T]) Subscribe(eventName string, handler EventHandler[T], priority int) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	d.handlers[eventName] = append(d.handlers[eventName], event.PriorityHandler[T]{Handler: handler, Priority: priority})
+	d.handlers[eventName] = append(d.handlers[eventName], PriorityHandler[T]{Handler: handler, Priority: priority})
 }
 
 // DispatchSync dispatches an event to all registered handlers, sorted by priority, synchronously.
@@ -53,9 +52,18 @@ func (d *EventDispatcher[T]) DispatchAsync(e T, wg *sync.WaitGroup) {
 
 	for _, ph := range handlers {
 		wg.Add(1)
-		go func(handler event.EventHandler[T], event T) {
+		go func(handler EventHandler[T], event T) {
 			defer wg.Done()
 			handler(event)
 		}(ph.Handler, e)
 	}
+}
+
+func GetDispatcher[T Event](eventName string) (*EventDispatcher[T], error) {
+	r := GetGlobalDispatcherRegistry().GetDispatcher(eventName)
+	eventDispatcher, ok := r.(*EventDispatcher[T])
+	if ok {
+		return eventDispatcher, nil
+	}
+	return nil, errors.New("dispatcher not found")
 }

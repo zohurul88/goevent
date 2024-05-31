@@ -1,20 +1,18 @@
-package dispatcher
+package goevent
 
 import (
 	"sync"
 	"testing"
-
-	"github.com/zohurul88/go-event/event"
 )
 
-type UserCreatedEvent struct {
-	event.BaseEvent
-	Username string
-}
+// type UserCreatedEvent struct {
+// 	event.BaseEvent
+// 	Username string
+// }
 
-func (e UserCreatedEvent) GetName() string {
-	return e.EventName
-}
+// func (e UserCreatedEvent) GetName() string {
+// 	return e.EventName
+// }
 
 func TestEventDispatcher_SubscribeAndDispatchSync(t *testing.T) {
 	dispatcher := NewEventDispatcher[UserCreatedEvent]()
@@ -26,7 +24,7 @@ func TestEventDispatcher_SubscribeAndDispatchSync(t *testing.T) {
 		result = append(result, "Handler2: "+event.Username)
 	}, 2)
 
-	ev := UserCreatedEvent{BaseEvent: event.BaseEvent{EventName: "UserCreated"}, Username: "johndoe"}
+	ev := UserCreatedEvent{BaseEvent: BaseEvent{EventName: "UserCreated"}, Username: "johndoe"}
 	dispatcher.DispatchSync(ev)
 
 	expected := []string{"Handler2: johndoe", "Handler1: johndoe"}
@@ -52,7 +50,7 @@ func TestEventDispatcher_DispatchAsync(t *testing.T) {
 		mu.Unlock()
 	}, 2)
 
-	ev := UserCreatedEvent{BaseEvent: event.BaseEvent{EventName: "UserCreated"}, Username: "johndoe"}
+	ev := UserCreatedEvent{BaseEvent: BaseEvent{EventName: "UserCreated"}, Username: "johndoe"}
 
 	var wg sync.WaitGroup
 	dispatcher.DispatchAsync(ev, &wg)

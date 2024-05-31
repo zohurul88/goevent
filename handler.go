@@ -1,4 +1,4 @@
-package event
+package goevent
 
 // EventHandler is a function type that handles an event.
 type EventHandler[T any] func(T)
